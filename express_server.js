@@ -16,9 +16,6 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
-// app.get("/", (req, res) => {
-//   res.send("Hello!");
-// });
 
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase };
@@ -40,8 +37,7 @@ app.get("/urls/:shortURL", (req, res) => {
 
 app.post("/urls", (req, res) => {
   let shortURL = generateRandomString();
-  //console.log(req.body.longURL); 
-  //res.send("Ok");         
+        
   urlDatabase[shortURL] = req.body.longURL;
   res.redirect(`/urls/${shortURL}`);
 });
