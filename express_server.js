@@ -39,7 +39,9 @@ app.get("/urls/new", (req, res) => {
 
 //Renders information about a single URL.
 app.get("/urls/:shortURL", (req, res) => {
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
+  const shortURL = req.params.shortURL //shortURL: key of longURL inside the urlDatabase
+  const longURL = urlDatabase[shortURL] //
+  const templateVars = { shortURL, longURL };
   res.render("urls_show", templateVars);
 });
 
@@ -63,6 +65,14 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   delete urlDatabase[key];
   res.redirect("/urls");
 })
+
+app.post("/urls/:shortURL/update", (req, res) => {
+  const key = req.params.shortURL
+  const longURL = req.body.longURL
+  urlDatabase[key] = longURL;
+  res.redirect("/urls");
+})
+
 
 
 app.listen(PORT, () => {
