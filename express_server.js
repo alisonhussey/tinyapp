@@ -44,22 +44,28 @@ app.get("/urls.json", (req, res) => {
 
 //sends data to /urls
 app.get("/urls", (req, res) => {
-  const templateVars = { username: req.cookies["username"], urls: urlDatabase };
+  let id = req.cookies["user_id"];
+  let user = users[id];
+  const templateVars = { user, urls: urlDatabase };
   //console.log(templateVars)
   res.render("urls_index", templateVars);
 })
 
 //Adds a GET Route to Show the Form
 app.get("/urls/new", (req, res) => {
-  const templateVars = { username: req.cookies["username"] }
+  let id = req.cookies["user_id"];
+  let user = users[id];
+  const templateVars = { user }
   res.render("urls_new", templateVars);
 });
 
 //Renders information about a single URL.
 app.get("/urls/:shortURL", (req, res) => {
+  let id = req.cookies["user_id"];
+  let user = users[id];
   const shortURL = req.params.shortURL //shortURL: key of longURL inside the urlDatabase
   const longURL = urlDatabase[shortURL] //
-  const templateVars = { username: req.cookies["username"], shortURL, longURL };
+  const templateVars = { user, shortURL, longURL };
   res.render("urls_show", templateVars);
 });
 
@@ -91,19 +97,21 @@ app.post("/urls/:shortURL/update", (req, res) => {
   res.redirect("/urls");
 })
 
-app.post("/login", (req, res) => {
-  const value = req.body.username;
-  res.cookie("username", value);
-  res.redirect("/urls");
-})
+// app.post("/login", (req, res) => {
+//   const value = req.body.username;
+//   res.cookie("username", value);
+//   res.redirect("/urls");
+// })
 
 app.post("/logout", (req, res) => {
-  res.clearCookie("username")
+  res.clearCookie("user_id")
   res.redirect("/urls")
 })
 
 app.get("/register", (req, res) => {
-  const templateVars = { username: req.cookies["username"], user_id: req.cookies["user_id"] }
+  let id = req.cookies["user_id"]
+  let user = users[id]
+  const templateVars = { user, user_id: req.cookies["user_id"] }
   res.render("register", templateVars);
 })
 
@@ -112,11 +120,12 @@ app.post("/register", (req, res) => {
   //console.log(req.body);
   //console.log(req.body.email)
   //console.log(req.body.password)
-  id = generateRandomString();
-  email = req.body.email;
-  password = req.body.password;
-  users[id] = { id: id, email: email, password: password };
-  res.cookie('user_id', users[id]);
+  let id = generateRandomString();
+  let email = req.body.email;
+  let password = req.body.password;
+  users[id] = { id, email, password };
+  res.cookie('user_id', id);
+  //console.log(res.cookie('user_id', users[id]))
   res.redirect("/urls");
 })
 
