@@ -18,11 +18,16 @@ function generateRandomString() {
 return Math.random().toString(36).substring(2, 8)
 }
 
-
 const urlDatabase = {
   '9sm5xK': "http://www.google.com",
   '32xVn2': "http://www.lighthouselabs.ca"
 };
+
+const users ={
+
+}
+
+
 //a JSON string representing the entire urlDatabase object.
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
@@ -91,6 +96,10 @@ app.post("/logout", (req, res) => {
 app.get("/register", (req, res) => {
   const templateVars = { username: req.cookies["username"] }
   res.render("register", templateVars);
+})
+
+app.post("/register", (req, res) => {
+  console.log(req.body);
 })
 
 app.listen(PORT, () => {
