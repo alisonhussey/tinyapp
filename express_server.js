@@ -23,8 +23,17 @@ const urlDatabase = {
   '32xVn2': "http://www.lighthouselabs.ca"
 };
 
-const users ={
-
+const users = { 
+  "userRandomID": {
+    id: "userRandomID", 
+    email: "user@example.com", 
+    password: "purple-monkey-dinosaur"
+  },
+ "user2RandomID": {
+    id: "user2RandomID", 
+    email: "user2@example.com", 
+    password: "dishwasher-funk"
+  }
 }
 
 
@@ -36,7 +45,7 @@ app.get("/urls.json", (req, res) => {
 //sends data to /urls
 app.get("/urls", (req, res) => {
   const templateVars = { username: req.cookies["username"], urls: urlDatabase };
-  console.log(templateVars)
+  //console.log(templateVars)
   res.render("urls_index", templateVars);
 })
 
@@ -94,12 +103,21 @@ app.post("/logout", (req, res) => {
 })
 
 app.get("/register", (req, res) => {
-  const templateVars = { username: req.cookies["username"] }
+  const templateVars = { username: req.cookies["username"], user_id: req.cookies["user_id"] }
   res.render("register", templateVars);
 })
 
+//adds user id to user object, creates cookie for user_id, redirects to homepade
 app.post("/register", (req, res) => {
-  console.log(req.body);
+  //console.log(req.body);
+  //console.log(req.body.email)
+  //console.log(req.body.password)
+  id = generateRandomString();
+  email = req.body.email;
+  password = req.body.password;
+  users[id] = { id: id, email: email, password: password };
+  res.cookie('user_id', users[id]);
+  res.redirect("/urls");
 })
 
 app.listen(PORT, () => {
