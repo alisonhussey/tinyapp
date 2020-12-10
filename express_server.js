@@ -39,8 +39,8 @@ function findUserByEmail(users, email) {
 }
 
 const urlDatabase = {
-  '9sm5xK': "http://www.google.com",
-  '32xVn2': "http://www.lighthouselabs.ca"
+  '9sm5xK': { longURL: "http://www.google.com", userID: "aJ48lW"  },
+  '32xVn2': { longURL: "http://www.lighthouselabs.ca", userID: "aJ48lW" }
 };
 
 const users = {
@@ -72,7 +72,13 @@ app.get("/urls", (req, res) => {
 //Adds a GET Route to Show the Form
 app.get("/urls/new", (req, res) => {
   const templateVars = { user: users[req.cookies["user_id"]] };
-  res.render("urls_new", templateVars);
+  const user = users[req.cookies["user_id"]]
+
+  if (!user) {
+    res.redirect("/login")
+  } else {
+    res.render("urls_new", templateVars);
+  }
 });
 
 //Renders information about a single URL.
@@ -86,7 +92,7 @@ app.get("/urls/:shortURL", (req, res) => {
 //a POST Route to Receive the Form Submission
 app.post("/urls", (req, res) => {
   let shortURL = generateRandomString();
-  urlDatabase[shortURL] = req.body.longURL;
+  urlDatabase[shortURL] = {longURL: req.body.longURL, userID: req.cookies["user_id"]} ;
   res.redirect(`/urls/${shortURL}`);
 });
 
@@ -116,7 +122,7 @@ app.get("/login", (req, res) => {
   res.render("login", templateVars);
 });
 
-
+//checks if user is in database, checks password, returns cookie, redirects to homepage
 app.post("/login", (req, res) => {
   let email = req.body.email;
   let password = req.body.password;
