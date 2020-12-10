@@ -38,6 +38,8 @@ function findUserByEmail(users, email) {
   return null;
 }
 
+
+
 const urlDatabase = {
   '9sm5xK': { longURL: "http://www.google.com", userID: "aJ48lW"  },
   '32xVn2': { longURL: "http://www.lighthouselabs.ca", userID: "aJ48lW" }
@@ -62,11 +64,28 @@ app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
+function urlsForUser(id) {
+  //const id = users[req.cookies["user_id"]]
+  const urls = {}
+  //console.log(urlDatabase)
+  for (let shortURL in urlDatabase) {
+    if (urlDatabase[shortURL].userID === id) {
+      urls[shortURL] = urlDatabase[shortURL]
+    }
+  }
+  return urls;
+};
+
 //sends data to /urls
 app.get("/urls", (req, res) => {
-  const templateVars = { user: users[req.cookies["user_id"]], urls: urlDatabase };
-  //console.log(templateVars)
-  res.render("urls_index", templateVars);
+  const user = users[req.cookies["user_id"]];
+  if (user) {
+    const urls = urlsForUser(user.id)
+    const templateVars = { user: users[req.cookies["user_id"]], urls: urls };
+    res.render("urls_index", templateVars); 
+  } else {
+    res.redirect("/login")
+  }
 });
 
 //Adds a GET Route to Show the Form
@@ -85,8 +104,14 @@ app.get("/urls/new", (req, res) => {
 app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL; //shortURL: key of longURL inside the urlDatabase
   const longURL = urlDatabase[shortURL]; //
-  const templateVars = { user: users[req.cookies["user_id"]], shortURL, longURL };
-  res.render("urls_show", templateVars);
+  const user = users[req.cookies["user_id"]]
+  if (user) {
+    const urls = urlsForUser(user.id)
+    const templateVars = { user: users[req.cookies["user_id"]], shortURL, longURL, urls};
+    res.render("urls_show", templateVars); 
+  } else {
+    res.redirect("/login")
+  }
 });
 
 //a POST Route to Receive the Form Submission
