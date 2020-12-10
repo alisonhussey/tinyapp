@@ -55,6 +55,11 @@ const users = {
     id: "user2RandomID",
     email: "user2@example.com",
     password: "dishwasher-funk"
+  },
+  "user3RandomID": {
+    id: "user3RandomID",
+    email: "alisonhussey@gmail.com",
+    password: "asd"
   }
 };
 
@@ -103,7 +108,7 @@ app.get("/urls/new", (req, res) => {
 //Renders information about a single URL.
 app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL; //shortURL: key of longURL inside the urlDatabase
-  const longURL = urlDatabase[shortURL]; //
+  const longURL = urlDatabase[shortURL]; 
   const user = users[req.cookies["user_id"]]
   if (user) {
     const urls = urlsForUser(user.id)
@@ -128,18 +133,36 @@ app.get("/u/:shortURL", (req, res) => {
   res.redirect(longURL);
 });
 
-//Deletes a url from the database and redirects back to the url listing the databse
+//Deletes Edits a URL if user is looged on, otherwise sends an error
 app.post("/urls/:shortURL/delete", (req, res) => {
   const key = req.params.shortURL;
-  delete urlDatabase[key];
-  res.redirect("/urls");
+
+  const user = users[req.cookies["user_id"]];
+  if (user) {
+    const urls = urlsForUser(user.id)
+    delete urlDatabase[key];
+    res.redirect("/urls");
+   } else {
+     res.status(403).send("You must login to do this")
+     res.redirect("/login")
+  }
 });
 
+//Edits a URL if user is looged on, otherwise sends an error
 app.post("/urls/:shortURL/update", (req, res) => {
   const key = req.params.shortURL;
   const longURL = req.body.longURL;
-  urlDatabase[key] = longURL;
-  res.redirect("/urls");
+
+  const user = users[req.cookies["user_id"]];
+  if (user) {
+    const urls = urlsForUser(user.id) 
+    urlDatabase[key] = longURL;
+    res.redirect("/urls");
+   } else {
+    res.status(403).send("You must login to do this")
+     res.redirect("/login")
+  }
+
 });
 
 app.get("/login", (req, res) => {
