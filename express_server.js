@@ -1,4 +1,5 @@
 const express = require("express");
+const bcrypt = require('bcrypt');
 const app = express();
 const PORT = 8080;
 
@@ -23,7 +24,8 @@ function addNewUser(users, email, password) {
   const newUser = {
     id: userId,
     email,
-    password
+    password: bcrypt.hashSync(password, 10)
+    
   };
   users[userId] = newUser;
   return userId;
@@ -31,6 +33,7 @@ function addNewUser(users, email, password) {
 
 function findUserByEmail(users, email) {
   for (let userId in users) {
+
     if (users[userId].email === email) {
       return users[userId];
     }
@@ -45,7 +48,7 @@ const urlDatabase = {
   '32xVn2': { longURL: "http://www.lighthouselabs.ca", userID: "aJ48lW" }
 };
 
-const users = {
+let users = {
   "userRandomID": {
     id: "userRandomID",
     email: "user@example.com",
@@ -63,6 +66,9 @@ const users = {
   }
 };
 
+for (let userId in users) {
+  users[userId].password = bcrypt.hashSync(users[userId].password, 10);
+}
 
 //a JSON string representing the entire urlDatabase object.
 app.get("/urls.json", (req, res) => {
@@ -174,13 +180,14 @@ app.get("/login", (req, res) => {
 app.post("/login", (req, res) => {
   let email = req.body.email;
   let password = req.body.password;
+  
   console.log("reqbody:", req.body);
 
   const user = findUserByEmail(users, email);
 
   if (!user) {
     res.status(403).send('Error - User Not Found');
-  } else if (password !== user.password) {
+  } else if (!bcrypt.compareSync(password, user.password)) {
     res.status(403).send('Error - Password Incorrect');
   } else {
     res.cookie("user_id", user.id);
@@ -202,7 +209,9 @@ app.get("/register", (req, res) => {
 app.post("/register", (req, res) => {
   console.log("req.body: ", req.body);
   let email = req.body.email;
-  let password = req.body.password;
+  let password = bcrypt.hashSync(req.body.password, 10);
+
+ 
   
   const user = findUserByEmail(users, email);
 
@@ -210,12 +219,15 @@ app.post("/register", (req, res) => {
     res.status(400).send('Error - Must fill out info');
   } else if (!user) {
     const userId = addNewUser(users, email, password);
+
     res.cookie('user_id', userId);
     res.redirect("/urls");
   } else {
     res.status(400).send('Error - User already exists.');
   }
+  console.log(users)
 });
+
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
