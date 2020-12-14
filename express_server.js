@@ -1,5 +1,6 @@
 const express = require("express");
 const bcrypt = require('bcrypt');
+const getUserByEmail = require('./helpers.js');
 const cookieSession = require('cookie-session')
 const app = express();
 const PORT = 8080;
@@ -35,15 +36,6 @@ const addNewUser = function(users, email, password) {
   };
   users[userId] = newUser;
   return userId;
-}
-
-const getUserByEmail = function(users, email) {
-  for (let userId in users) {
-
-    if (users[userId].email === email) {
-      return users[userId];
-    }
-  }
 }
 
 
