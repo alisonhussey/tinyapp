@@ -21,30 +21,29 @@ app.set("view engine", "ejs");
 
 
 //used to create a random shortURL id
-function generateRandomString() {
+const generateRandomString = function() {
   return Math.random().toString(36).substring(2, 8);
 }
 
-function addNewUser(users, email, password) {
+const addNewUser = function(users, email, password) {
   const userId = generateRandomString();
   const newUser = {
     id: userId,
     email,
-    password: bcrypt.hashSync(password, 10)
+    password//: bcrypt.hashSync(password, 10)
     
   };
   users[userId] = newUser;
   return userId;
 }
 
-function findUserByEmail(users, email) {
+const getUserByEmail = function(users, email) {
   for (let userId in users) {
 
     if (users[userId].email === email) {
       return users[userId];
     }
   }
-  return null;
 }
 
 
@@ -118,8 +117,8 @@ app.get("/urls/new", (req, res) => {
 //Renders information about a single URL.
 app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL; //shortURL: key of longURL inside the urlDatabase
-  const longURL = urlDatabase[shortURL]; 
-  const user = users[req.session[user_id]]
+  const longURL = urlDatabase[shortURL].longURL; 
+  const user = users[req.session['user_id']]
   if (user) {
     const urls = urlsForUser(user.id)
     const templateVars = { user: users[req.session['user_id']], shortURL, longURL, urls};
@@ -158,6 +157,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   }
 });
 
+
 //Edits a URL if user is looged on, otherwise sends an error
 app.post("/urls/:shortURL/update", (req, res) => {
   const key = req.params.shortURL;
@@ -166,7 +166,7 @@ app.post("/urls/:shortURL/update", (req, res) => {
   const user = users[req.session['user_id']];
   if (user) {
     const urls = urlsForUser(user.id) 
-    urlDatabase[key] = longURL;
+    urlDatabase[key] = {longURL: longURL, userID: user.id};
     res.redirect("/urls");
    } else {
     res.status(403).send("You must login to do this")
@@ -187,7 +187,7 @@ app.post("/login", (req, res) => {
   
   console.log("reqbody:", req.body);
 
-  const user = findUserByEmail(users, email);
+  const user = getUserByEmail(users, email);
 
   if (!user) {
     res.status(403).send('Error - User Not Found');
@@ -217,7 +217,7 @@ app.post("/register", (req, res) => {
 
  
   
-  const user = findUserByEmail(users, email);
+  const user = getUserByEmail(users, email);
 
   if (email.length === 0 && password.length === 0) {
     res.status(400).send('Error - Must fill out info');
