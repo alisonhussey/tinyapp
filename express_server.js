@@ -43,7 +43,7 @@ const urlDatabase = {
   '32xVn2': { longURL: "http://www.lighthouselabs.ca", userID: "aJ48lW" }
 };
 
-let users = {
+const users = {
   "userRandomID": {
     id: "userRandomID",
     email: "user@example.com",
@@ -115,20 +115,21 @@ app.get("/urls/:shortURL", (req, res) => {
     const templateVars = { user: users[req.session['user_id']], shortURL, longURL, urls};
     res.render("urls_show", templateVars);
   } else {
+    // res.status(403).send("You must login to do this");
     res.redirect("/login");
   }
 });
 
 //a POST Route to Receive the Form Submission for a url
 app.post("/urls", (req, res) => {
-  let shortURL = generateRandomString();
+  const shortURL = generateRandomString();
   urlDatabase[shortURL] = {longURL: req.body.longURL, userID: req.session['user_id']};
   res.redirect(`/urls/${shortURL}`);
 });
 
 //Redirects any request to "/u/:shortURL" to its longURL
 app.get("/u/:shortURL", (req, res) => {
-  let shortURL = req.params.shortURL;
+  const shortURL = req.params.shortURL;
   const longURL = urlDatabase[shortURL]['longURL'];
   res.redirect(longURL);
 });
@@ -149,11 +150,11 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 
 //Edits a URL if user is logged in, otherwise sends an error
 app.post("/urls/:shortURL/update", (req, res) => {
-  const key = req.params.shortURL;
+  const shortURL = req.params.shortURL;
   const longURL = req.body.longURL;
   const user = users[req.session['user_id']];
   if (user) {
-    urlDatabase[key] = {longURL: longURL, userID: user.id};
+    urlDatabase[shortURL] = {longURL: longURL, userID: user.id};
     res.redirect("/urls");
   } else {
     res.status(403).send("You must login to do this");
@@ -169,8 +170,8 @@ app.get("/login", (req, res) => {
 
 //checks if user is in database, checks password, returns cookie, redirects to homepage
 app.post("/login", (req, res) => {
-  let email = req.body.email;
-  let password = req.body.password;
+  const email = req.body.email;
+  const password = req.body.password;
   const user = getUserByEmail(users, email);
   if (!user) {
     res.status(403).send('Error - User Not Found');
@@ -197,8 +198,8 @@ app.get("/register", (req, res) => {
 //adds user id to user object, creates cookie for user_id, redirects to homepade
 app.post("/register", (req, res) => {
   console.log("req.body: ", req.body);
-  let email = req.body.email;
-  let password = bcrypt.hashSync(req.body.password, 10);
+  const email = req.body.email;
+  const password = bcrypt.hashSync(req.body.password, 10);
   const user = getUserByEmail(users, email);
   if (email.length === 0 && password.length === 0) {
     res.status(400).send('Error - Must fill out info');
