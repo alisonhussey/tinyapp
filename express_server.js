@@ -1,6 +1,6 @@
 const express = require("express");
 const bcrypt = require('bcrypt');
-const getUserByEmail = require('./helpers.js');
+const { getUserByEmail } = require('./helpers.js');
 const cookieSession = require('cookie-session');
 const app = express();
 const PORT = 8080;
@@ -20,11 +20,11 @@ app.use(cookieSession({
 app.set("view engine", "ejs");
 
 
-
 //used to create a random shortURL id
 const generateRandomString = function() {
   return Math.random().toString(36).substring(2, 8);
 };
+
 
 //Adds new user object to users databse with a random ID
 const addNewUser = function(users, email, password) {
@@ -38,38 +38,14 @@ const addNewUser = function(users, email, password) {
   return userId;
 };
 
-const urlDatabase = {
-  '9sm5xK': { longURL: "http://www.google.com", userID: "aJ48lW"  },
-  '32xVn2': { longURL: "http://www.lighthouselabs.ca", userID: "aJ48lW" }
-};
+const urlDatabase = {};
 
-const users = {
-  "userRandomID": {
-    id: "userRandomID",
-    email: "user@example.com",
-    password: "purple-monkey-dinosaur"
-  },
-  "user2RandomID": {
-    id: "user2RandomID",
-    email: "user2@example.com",
-    password: "dishwasher-funk"
-  },
-  "user3RandomID": {
-    id: "user3RandomID",
-    email: "alisonhussey@gmail.com",
-    password: "asd"
-  }
-};
+const users = {};
 
 //encrypts passwords in users database
-for (let userId in users) {
-  users[userId].password = bcrypt.hashSync(users[userId].password, 10);
-}
-
-//a JSON string representing the entire urlDatabase object.
-app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase);
-});
+// for (let userId in users) {
+//   users[userId].password = bcrypt.hashSync(users[userId].password, 10);
+// }
 
 //returns urls saved for a given user
 const urlsForUser = function(id) {
@@ -81,6 +57,15 @@ const urlsForUser = function(id) {
   }
   return urls;
 };
+
+app.get("/", (req, res) => {
+  const user = users[req.session['user_id']];
+  if (user) {
+    res.redirect('/urls');
+  } else {
+    res.redirect('/login');
+  }
+});
 
 //sends data to /urls
 app.get("/urls", (req, res) => {
@@ -107,17 +92,26 @@ app.get("/urls/new", (req, res) => {
 
 //Renders information about a single URL.
 app.get("/urls/:shortURL", (req, res) => {
-  const shortURL = req.params.shortURL; //shortURL: key of longURL inside the urlDatabase
+  const shortURL = req.params.shortURL;
   const longURL = urlDatabase[shortURL].longURL;
-  const user = users[req.session['user_id']];
-  if (user) {
-    const urls = urlsForUser(user.id);
-    const templateVars = { user: users[req.session['user_id']], shortURL, longURL, urls};
-    res.render("urls_show", templateVars);
-  } else {
-    // res.status(403).send("You must login to do this");
+  const userObj = users[req.session['user_id']];
+
+  if (!userObj) {
+    res.status(403).send("You must login to do this");
     res.redirect("/login");
+    return;
   }
+  const urlObj = urlDatabase[shortURL];
+  if (urlObj.userID !== userObj.id) {
+    res.status(403).send("You are not the correct user");
+    res.redirect("/urls");
+    return;
+  }
+
+  const urls = urlsForUser(userObj.id);
+  const templateVars = { user: users[req.session['user_id']], shortURL, longURL, urls};
+  res.render("urls_show", templateVars);
+  
 });
 
 //a POST Route to Receive the Form Submission for a url
@@ -136,30 +130,46 @@ app.get("/u/:shortURL", (req, res) => {
 
 //Deletes a URL if user is logged in, otherwise sends an error
 app.post("/urls/:shortURL/delete", (req, res) => {
-  const key = req.params.shortURL;
-  const user = users[req.session['user_id']];
-  if (user) {
-    delete urlDatabase[key];
-    res.redirect("/urls");
-  } else {
+  const shortURL = req.params.shortURL;
+  const userObj = users[req.session['user_id']];
+
+  if (!userObj) {
     res.status(403).send("You must login to do this");
     res.redirect("/login");
+    return;
   }
-});
 
+  const urlObj = urlDatabase[shortURL];
+  if (urlObj.userID !== userObj.id) {
+    res.status(403).send("You are not the correct user");
+    res.redirect("/urls");
+    return;
+  }
+
+  delete urlDatabase[shortURL];
+  res.redirect("/urls");
+});
 
 //Edits a URL if user is logged in, otherwise sends an error
 app.post("/urls/:shortURL/update", (req, res) => {
   const shortURL = req.params.shortURL;
   const longURL = req.body.longURL;
-  const user = users[req.session['user_id']];
-  if (user) {
-    urlDatabase[shortURL] = {longURL: longURL, userID: user.id};
-    res.redirect("/urls");
-  } else {
+  const userObj = users[req.session['user_id']];
+
+  if (!userObj) {
     res.status(403).send("You must login to do this");
     res.redirect("/login");
+    return;
   }
+  const urlObj = urlDatabase[shortURL];
+  if (urlObj.userID !== userObj.id) {
+    res.status(403).send("You are not the correct user");
+    res.redirect("/urls");
+    return;
+  }
+  urlDatabase[shortURL] = {longURL: longURL, userID: userObj.id};
+  res.redirect("/urls");
+ 
 });
 
 //renders login page
